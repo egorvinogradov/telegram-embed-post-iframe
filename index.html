@@ -1,0 +1,123 @@
+<html>
+<head>
+  <title>Telegram Embed Post IFrame</title>
+  <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+  <style type="text/css">
+    #content {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial,sans-serif;
+      max-width: 600px;
+      margin: calc(50vh - 150px) auto 0 auto;
+    }
+    #content ol {
+      padding-left: 20px;
+      line-height: 140%;
+      margin-bottom: 25px;
+    }
+    #form {
+      text-align: right;
+    }
+    #code {
+      font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, Liberation Mono, monospace;
+      display: block;
+      width: 100%;
+      margin-bottom: 10px;
+      height: 120px;
+      padding: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<div id="content">
+  <h3>Get Telegram Post URL embeddable via IFrame</h3>
+  <ol>
+    <li>
+      Go to <a href="https://core.telegram.org/widgets/post" target="_blank">https://core.telegram.org/widgets/post</a>.
+    </li>
+    <li>Copy embed code.</li>
+    <li>Paste it down below and hit Submit.</li>
+  </ol>
+
+  <form id="form" action="#">
+    <textarea id="code" placeholder='For example:
+<script async src="https://telegram.org/js/telegram-widget.js?15" data-telegram-post="startupoftheday/2201" data-width="600" data-userpic="false" data-color="E22F38" data-dark="1" data-dark-color="F95C54"></script>'></textarea>
+    <button type="submit">Submit</button>
+  </form>
+</div>
+
+
+<script>
+
+  if (location.hostname !== 'localhost' && location.protocol === 'http:') {
+    location.protocol = 'https:';
+  }
+
+  function parseUrlParams(){
+    const params = {};
+    location.search.replace(/^\?/, '').split('&').forEach(pair => {
+      const [ key, value ] = pair.split('=');
+      params[key] = value;
+    });
+    return params;
+  };
+
+  function stringifyUrlParams(params){
+    let urlParams = [];
+    for (let key in params) {
+      urlParams.push(`${key}=${params[key]}`);
+    }
+    return urlParams.length ? '?' + urlParams.join('&') : '';
+  };
+
+  function telegramCodeToDataset(code){
+    const params = {};
+    const paramStrings = code
+      .replace(/<|>/ig, ' ')
+      .split(/\s/)
+      .filter(param => param.startsWith('data-'));
+
+    paramStrings.forEach(paramString => {
+      const [ keyRaw, valueRaw ] = paramString.split('=');
+      const key = keyRaw
+        .replace('data-', '')
+        .replace(/-([a-z])/g, str => str[1].toUpperCase());
+
+      const value = valueRaw.replace(/"/ig, '');
+      params[key] = value;
+    });
+    return params;
+  };
+
+  function appendTelegramWidgetScript(params){
+    const widget = document.createElement('script');
+    for (key in params) {
+      widget.dataset[key] = params[key];
+    }
+    widget.async = true;
+    widget.src = 'https://telegram.org/js/telegram-widget.js?15';
+    document.body.appendChild(widget);
+  }
+
+  function hideContent(){
+    document.getElementById('content').hidden = true;
+  }
+
+  // Initialization
+  const urlParams = parseUrlParams();
+
+  if (urlParams.telegramPost) {
+    hideContent();
+    appendTelegramWidgetScript(urlParams);
+  }
+  else {
+    document.getElementById('form').addEventListener('submit', e => {
+      e.preventDefault();
+      const code = document.getElementById('code').value;
+      const params = telegramCodeToDataset(code);
+      location.search = stringifyUrlParams(params);
+    });
+  }
+</script>
+
+</body>
+</html>
